@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>词条翻译工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans SC',system-ui,sans-serif;background:#F0EFFF;color:#1A1A2E;min-height:100vh;padding:24px 16px 60px}
+.wrap{max-width:700px;margin:0 auto}
+
+/* Hero 渐变横幅 */
+.hero{background:linear-gradient(135deg,#6B72E8 0%,#9B59B6 100%);border-radius:18px;padding:30px 28px;text-align:center;margin-bottom:14px;box-shadow:0 4px 24px rgba(107,114,232,.25)}
+.hero-icon{font-size:38px;margin-bottom:10px}
+.hero h1{color:#fff;font-size:24px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px}
+.hero p{color:rgba(255,255,255,.78);font-size:13px;line-height:1.6}
+
+/* 卡片 */
+.card{background:#fff;border-radius:14px;margin-bottom:12px;box-shadow:0 1px 6px rgba(80,70,200,.08);overflow:hidden}
+.card-hdr{padding:14px 20px 11px;font-size:13px;font-weight:600;color:#534AB7;border-bottom:1px solid #F0EFFF;display:flex;align-items:center;gap:7px}
+.card-body{padding:16px 20px 18px}
+
+/* API Key */
+.key-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.key-grid{grid-template-columns:1fr}}
+.key-item label{display:block;font-size:11px;color:#9CA3AF;margin-bottom:5px;letter-spacing:.4px;text-transform:uppercase}
+.key-input{width:100%;background:#F5F4FF;border:1.5px solid #DDD6FE;border-radius:8px;padding:9px 12px;font-size:12.5px;font-family:monospace;color:#1A1A2E;outline:none;transition:border-color .2s,box-shadow .2s}
+.key-input:focus{border-color:#7C3AED;box-shadow:0 0 0 3px rgba(124,58,237,.12)}
+.key-note{margin-top:10px;font-size:11.5px;color:#9CA3AF}
+
+/* 文件上传 */
+.upload-zone{border:1.5px dashed #C4B5FD;border-radius:10px;padding:26px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:#FAFAFF}
+.upload-zone:hover,.upload-zone.drag{border-color:#7C3AED;background:#F5F3FF}
+.upload-icon{font-size:30px;margin-bottom:8px}
+.upload-main{font-size:14px;font-weight:500;color:#374151;margin-bottom:3px}
+.upload-sub{font-size:12px;color:#9CA3AF}
+#fileInput{position:absolute;inset:0;opacity:0;cursor:pointer}
+.file-ok{margin-top:10px;padding:9px 14px;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;font-size:12.5px;color:#065F46;display:none;align-items:center;gap:7px}
+.file-ok.show{display:flex}
+
+/* 语言 */
+.lang-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.t-btn{font-size:12px;padding:5px 14px;border-radius:7px;border:1.5px solid #DDD6FE;background:#fff;color:#534AB7;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
+.t-btn:hover{background:#EDE9FE;border-color:#A78BFA}
+.sel-count{margin-left:auto;font-size:12px;color:#9CA3AF}
+.lang-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+@media(max-width:560px){.lang-grid{grid-template-columns:repeat(2,1fr)}}
+.lang-chip{border:1.5px solid #E5E4F8;border-radius:9px;padding:8px 9px;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:12px;color:#374151;background:#FAFAFF;transition:all .15s;user-select:none;line-height:1.3}
+.lang-chip:hover{border-color:#A78BFA;background:#F5F3FF}
+.lang-chip.on{border-color:#534AB7;background:#EDE9FE;color:#3730A3;font-weight:600}
+.chip-box{width:14px;height:14px;border-radius:4px;border:1.5px solid #D1D5DB;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;transition:all .15s;background:#fff}
+.lang-chip.on .chip-box{border-color:#534AB7;background:#534AB7}
+
+/* 进度 */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.stat{background:#F7F7FB;border-radius:10px;padding:12px 6px;text-align:center}
+.stat-n{font-size:26px;font-weight:700;color:#1A1A2E;line-height:1;font-variant-numeric:tabular-nums}
+.stat-n.bl{color:#3B82F6}.stat-n.rd{color:#EF4444}
+.stat-l{font-size:11px;color:#6B7280;margin-top:4px}
+.pb-track{background:#EDE9FE;border-radius:99px;height:8px;overflow:hidden;margin-bottom:8px}
+.pb-fill{height:8px;border-radius:99px;background:linear-gradient(90deg,#534AB7,#7C3AED);width:0%;transition:width .35s ease}
+.st-row{display:flex;justify-content:space-between;font-size:12px}
+.st-txt{color:#9CA3AF}.st-pct{color:#374151;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* 按钮 */
+.btn-go{width:100%;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;background:linear-gradient(135deg,#534AB7,#7C3AED);color:#fff;margin:6px 0 10px;box-shadow:0 4px 18px rgba(83,74,183,.3);transition:opacity .15s,transform .1s}
+.btn-go:hover:not(:disabled){opacity:.91;transform:translateY(-1px)}
+.btn-go:active:not(:disabled){transform:translateY(0)}
+.btn-go:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.btn-dl{width:100%;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;background:linear-gradient(135deg,#059669,#10B981);color:#fff;margin:0 0 10px;box-shadow:0 4px 18px rgba(5,150,105,.22);display:none;transition:opacity .15s,transform .1s}
+.btn-dl:hover{opacity:.9;transform:translateY(-1px)}.btn-dl.show{display:block}
+
+/* 日志 */
+.log-box{background:#F7F7FB;border-radius:10px;padding:12px 14px;height:185px;overflow-y:auto;font-family:ui-monospace,'Menlo',monospace;font-size:11px;line-height:1.75;border:1px solid #EDE9FE}
+.log-box::-webkit-scrollbar{width:4px}
+.log-box::-webkit-scrollbar-thumb{background:#DDD6FE;border-radius:99px}
+.ll{display:flex;gap:9px}
+.ll .ts{color:#9CA3AF;flex-shrink:0}
+.ll .tg{flex-shrink:0;font-weight:600;min-width:40px}
+.ll.ok .tg,.ll.ok .lm{color:#059669}
+.ll.err .tg,.ll.err .lm{color:#DC2626}
+.ll.inf .tg,.ll.inf .lm{color:#2563EB}
+.ll.wrn .tg,.ll.wrn .lm{color:#D97706}
+.ll.dim .tg,.ll.dim .lm{color:#9CA3AF}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-icon">🌐</div>
+  <h1>词条翻译工具</h1>
+  <p>基于 DeepL API &nbsp;·&nbsp; F 列英文批量翻译为最多 20 种语言 &nbsp;·&nbsp; 翻译结果写入 G~Z 列</p>
+</div>
+
+<!-- API Key -->
+<div class="card" id="setupNotice" style="border:1.5px solid #FDE68A;background:#FFFBEB">
+  <div class="card-hdr" style="color:#92400E">⚙️&nbsp; 部署配置（首次使用需完成）</div>
+  <div class="card-body" style="font-size:13px;color:#78350F;line-height:1.8">
+    由于浏览器安全限制，需先部署一个免费中转服务：<br>
+    <strong>第 1 步</strong>：注册 <a href="https://workers.cloudflare.com" target="_blank" style="color:#7C3AED">Cloudflare Workers</a>（免费）<br>
+    <strong>第 2 步</strong>：新建 Worker，将 <code style="background:#FEF3C7;padding:1px 5px;border-radius:4px">worker.js</code> 的内容粘贴进去，点击部署<br>
+    <strong>第 3 步</strong>：复制 Worker 的 URL（格式：<code style="background:#FEF3C7;padding:1px 5px;border-radius:4px">https://xxx.workers.dev</code>）<br>
+    <strong>第 4 步</strong>：填入下方输入框并保存
+    <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+      <input id="proxyInput" type="text" placeholder="https://your-worker.your-name.workers.dev"
+        style="flex:1;background:#fff;border:1.5px solid #FCD34D;border-radius:8px;padding:8px 12px;font-size:12.5px;outline:none;color:#1A1A2E">
+      <button onclick="saveProxy()" style="background:#7C3AED;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">保存</button>
+    </div>
+    <div id="proxyStatus" style="margin-top:6px;font-size:12px;color:#059669;display:none">✅ 已保存！</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hdr">🔑&nbsp; DeepL API Keys</div>
+  <div class="card-body">
+    <div class="key-grid">
+      <div class="key-item"><label>Key 1</label><input class="key-input" id="key1" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx" value="f86770d4-62f9-4240-8937-6826a1cc511f:fx"></div>
+      <div class="key-item"><label>Key 2（备用，可选）</label><input class="key-input" id="key2" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx" value="d7a2a2ef-9f8a-422b-9c4f-ad9f63633d7e:fx"></div>
+    </div>
+    <div class="key-note">🔒 Key 仅在浏览器本地使用，不会上传至任何服务器</div>
+  </div>
+</div>
+
+<!-- 文件 -->
+<div class="card">
+  <div class="card-hdr">📄&nbsp; 选择 Excel 文件</div>
+  <div class="card-body">
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm">
+      <div class="upload-icon">📊</div>
+      <div class="upload-main">点击选择或拖拽 Excel 文件到此处</div>
+      <div class="upload-sub">支持 .xlsx · .xls · .xlsm</div>
+    </div>
+    <div class="file-ok" id="fileOk"><span>✅</span><span id="fileOkTxt"></span></div>
+  </div>
+</div>
+
+<!-- 语言 -->
+<div class="card">
+  <div class="card-hdr">🌏&nbsp; 选择目标语言 <span class="sel-count" id="selCount">已选 0 / 20 种</span></div>
+  <div class="card-body">
+    <div class="lang-toolbar">
+      <button class="t-btn" onclick="selAll()">全选</button>
+      <button class="t-btn" onclick="clrAll()">清空</button>
+    </div>
+    <div class="lang-grid" id="langGrid"></div>
+  </div>
+</div>
+
+<!-- 进度 -->
+<div class="card">
+  <div class="card-hdr">📊&nbsp; 翻译进度</div>
+  <div class="card-body">
+    <div class="stats">
+      <div class="stat"><div class="stat-n" id="sT">0</div><div class="stat-l">总计（条×语言）</div></div>
+      <div class="stat"><div class="stat-n bl" id="sD">0</div><div class="stat-l">已完成</div></div>
+      <div class="stat"><div class="stat-n" id="sR">0</div><div class="stat-l">待翻译</div></div>
+      <div class="stat"><div class="stat-n rd" id="sF">0</div><div class="stat-l">失败</div></div>
+    </div>
+    <div class="pb-track"><div class="pb-fill" id="pb"></div></div>
+    <div class="st-row">
+      <span class="st-txt" id="stxt">请上传文件并选择语言后开始</span>
+      <span class="st-pct" id="spct">0%</span>
+    </div>
+  </div>
+</div>
+
+<button class="btn-go" id="goBtn" onclick="doStart()">▶&nbsp;&nbsp;开始翻译</button>
+<button class="btn-dl" id="dlBtn" onclick="doDownload()">⬇&nbsp;&nbsp;下载翻译结果</button>
+
+<!-- 日志 -->
+<div class="card">
+  <div class="card-hdr">🖥&nbsp; 翻译日志</div>
+  <div class="card-body" style="padding-bottom:14px"><div class="log-box" id="log"></div></div>
+</div>
+
+</div>
+<script>
+const LANGS=[["西班牙文 (Spanish)","ES","Spanish"],["葡萄牙文 (Portuguese)","PT-PT","Portuguese"],["法语 (French)","FR","French"],["繁體中文·香港 (Chinese HK)","ZH-HANT","Chinese (HK)"],["俄罗斯语 (Russian)","RU","Russian"],["德语 (German)","DE","German"],["日语 (Japanese)","JA","Japanese"],["泰语 (Thai)","TH","Thai"],["阿拉伯语 (Arabic)","AR","Arabic"],["越南语 (Vietnamese)","VI","Vietnamese"],["土耳其语 (Turkish)","TR","Turkish"],["波兰语 (Polish)","PL","Polish"],["塞尔维亚语 (Serbian)","SR","Serbian"],["意大利语 (Italian)","IT","Italian"],["希伯来语 (Hebrew)","HE","Hebrew"],["塔吉克语 (Tajik)","TG","Tajik"],["丹麦语 (Danish)","DA","Danish"],["荷兰语 (Dutch)","NL","Dutch"],["瑞典语 (Swedish)","SV","Swedish"],["芬兰语 (Finnish)","FI","Finnish"]];
+
+let wb=null,origName='',sel=new Set(),blob=null;
+
+// 语言格子
+const grid=document.getElementById('langGrid');
+LANGS.forEach(([name])=>{
+  const el=document.createElement('div');
+  el.className='lang-chip';el.dataset.name=name;
+  el.innerHTML=`<div class="chip-box"></div><span>${name}</span>`;
+  el.onclick=()=>tog(name,el);grid.appendChild(el);
+});
+function tog(name,el){if(sel.has(name)){sel.delete(name);el.classList.remove('on');el.querySelector('.chip-box').textContent='';}else{sel.add(name);el.classList.add('on');el.querySelector('.chip-box').textContent='✓';}cnt();}
+function selAll(){document.querySelectorAll('.lang-chip').forEach(el=>{sel.add(el.dataset.name);el.classList.add('on');el.querySelector('.chip-box').textContent='✓';});cnt();}
+function clrAll(){document.querySelectorAll('.lang-chip').forEach(el=>{sel.delete(el.dataset.name);el.classList.remove('on');el.querySelector('.chip-box').textContent='';});cnt();}
+function cnt(){document.getElementById('selCount').textContent=`已选 ${sel.size} / 20 种`;}
+
+// 文件
+const zone=document.getElementById('uploadZone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');if(e.dataTransfer.files[0])load(e.dataTransfer.files[0]);});
+document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])load(e.target.files[0]);});
+
+function load(file){
+  origName=file.name;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      wb=XLSX.read(e.target.result,{type:'array',cellStyles:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const range=XLSX.utils.decode_range(ws['!ref']||'A1');
+      let n=0;
+      for(let r=range.s.r;r<=range.e.r;r++){const c=ws[XLSX.utils.encode_cell({r,c:5})];if(c&&c.v!==undefined&&String(c.v).trim())n++;}
+      document.getElementById('fileOkTxt').textContent=`${file.name} · 检测到 F 列共 ${n} 条词条`;
+      document.getElementById('fileOk').classList.add('show');
+      lg('inf',`已加载：${file.name}，F 列 ${n} 条`);
+      blob=null;document.getElementById('dlBtn').classList.remove('show');
+    }catch(e){lg('err','读取失败：'+e.message);}
+  };
+  rd.readAsArrayBuffer(file);
+}
+
+// DeepL — 通过 Cloudflare Worker 代理（解决 CORS）
+// 部署 worker.js 后将下面的 URL 替换为你的 Worker 地址
+const PROXY_URL = 'https://deepl-proxy.dongningcheer.workers.dev/';
+
+async function deepl(texts,lang,keys){
+  let last;
+  for(const key of keys){
+    if(!key.trim())continue;
+    try{
+      const url = (window._proxyUrl) || (PROXY_URL !== 'YOUR_WORKER_URL' ? PROXY_URL : null);
+      if(!url){throw new Error('请先在页面顶部填写并保存 Cloudflare Worker 地址！');}
+      const r=await fetch(url,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({key:key.trim(),texts,target_lang:lang,source_lang:'EN'})
+      });
+      if(r.ok){const d=await r.json();return d.translations.map(t=>t.text);}
+      const t=await r.text();
+      if(r.status===456){last=new Error('额度超限');continue;}
+      if(r.status===403){last=new Error('Key无效(403)');continue;}
+      throw new Error('HTTP '+r.status+': '+t.slice(0,120));
+    }catch(e){ last=e; }
+  }
+  throw last||new Error('所有 Key 均不可用');
+}
+
+// 翻译主流程
+async function doStart(){
+  if(!wb){alert('请先选择 Excel 文件！');return;}
+  if(!sel.size){alert('请至少勾选一种目标语言！');return;}
+  const keys=[document.getElementById('key1').value,document.getElementById('key2').value].filter(k=>k.trim());
+  if(!keys.length){alert('请填写至少一个 DeepL API Key！');return;}
+
+  const goBtn=document.getElementById('goBtn');
+  goBtn.disabled=true;goBtn.textContent='⏳  翻译中…';
+  document.getElementById('dlBtn').classList.remove('show');blob=null;
+
+  const selL=LANGS.filter(([name])=>sel.has(name));
+  const nL=selL.length;
+
+  const book=XLSX.read(XLSX.write(wb,{bookType:'xlsx',type:'array'}),{type:'array',cellStyles:true});
+  const wsName=book.SheetNames[0];
+  const ws=book.Sheets[wsName];
+  const range=XLSX.utils.decode_range(ws['!ref']||'A1');
+
+  const entries=[];
+  for(let r=range.s.r;r<=range.e.r;r++){
+    const c=ws[XLSX.utils.encode_cell({r,c:5})];
+    if(c&&c.v!==undefined&&String(c.v).trim())entries.push({row:r,text:String(c.v).trim()});
+  }
+  if(!entries.length){lg('err','F 列无词条');goBtn.disabled=false;goBtn.textContent='▶  开始翻译';return;}
+
+  const nR=entries.length,total=nR*nL;
+  let done=0,fails=0;
+  ss(total,0,total,0);pp(0);
+  lg('inf',`${nR} 条词条 × ${nL} 种语言 = ${total} 次翻译`);
+
+  const hs={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{patternType:'solid',fgColor:{rgb:'534AB7'}},alignment:{horizontal:'center',vertical:'center'}};
+
+  // 检查是否需要插入表头行
+  if(entries.length&&entries[0].row===0){
+    const shifted={};
+    for(const addr in ws){
+      if(addr.startsWith('!')){shifted[addr]=ws[addr];continue;}
+      const ref=XLSX.utils.decode_cell(addr);ref.r+=1;
+      shifted[XLSX.utils.encode_cell(ref)]=ws[addr];
+    }
+    Object.assign(ws,shifted);
+    entries.forEach(e=>e.row+=1);
+    range.e.r+=1;ws['!ref']=XLSX.utils.encode_range(range);
+  }
+
+  // 写表头
+  const fa=XLSX.utils.encode_cell({r:0,c:5});
+  if(!ws[fa]||!ws[fa].v)ws[fa]={v:'English',t:'s',s:hs};
+  selL.forEach(([,,hdr],i)=>{
+    const col=6+i;
+    ws[XLSX.utils.encode_cell({r:0,c:col})]={v:hdr,t:'s',s:hs};
+    if(col>range.e.c)range.e.c=col;
+  });
+  ws['!ref']=XLSX.utils.encode_range(range);
+  ws['!cols']=ws['!cols']||[];
+  for(let c=5;c<=range.e.c;c++)ws['!cols'][c]={wch:24};
+
+  // 逐语言翻译
+  for(let li=0;li<selL.length;li++){
+    const [langName,langCode]=selL[li];
+    const col=6+li;
+    lg('inf',`[${li+1}/${nL}] 翻译 ${langName}…`);
+    for(let i=0;i<entries.length;i+=50){
+      const batch=entries.slice(i,i+50);
+      try{
+        const res=await deepl(batch.map(e=>e.text),langCode,keys);
+        batch.forEach((e,j)=>{
+          ws[XLSX.utils.encode_cell({r:e.row,c:col})]={v:res[j],t:'s'};
+          const o=e.text.length>14?e.text.slice(0,14)+'…':e.text;
+          const rv=res[j].length>14?res[j].slice(0,14)+'…':res[j];
+          lg('ok',`${langName.slice(0,5)}  行${e.row+1}  ${o} → ${rv}`);
+        });
+        done+=batch.length;
+      }catch(e){lg('err',`${langName}: ${e.message}`);fails+=batch.length;done+=batch.length;}
+      ss(total,done,Math.max(0,total-done),fails);pp(Math.round(done/total*100));
+      await sleep(100);
+    }
+  }
+
+  lg('wrn','生成 Excel 文件…');
+  const arr=XLSX.write(book,{bookType:'xlsx',type:'array',cellStyles:true});
+  blob=new Blob([arr],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  pp(100);
+  document.getElementById('stxt').textContent=`✅  完成！成功 ${done-fails} 条，失败 ${fails} 条`;
+  lg('ok','✅ 点击下方绿色按钮下载文件');
+  goBtn.disabled=false;goBtn.textContent='▶  重新翻译';
+  document.getElementById('dlBtn').classList.add('show');
+}
+
+function doDownload(){
+  if(!blob)return;
+  const base=origName.replace(/\.[^.]+$/,'');
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`${base}_translated.xlsx`;a.click();URL.revokeObjectURL(url);
+}
+
+function ss(t,d,r,f){document.getElementById('sT').textContent=t;document.getElementById('sD').textContent=d;document.getElementById('sR').textContent=r;document.getElementById('sF').textContent=f;}
+function pp(p){
+  document.getElementById('pb').style.width=p+'%';
+  document.getElementById('spct').textContent=p+'%';
+  if(p>0&&p<100)document.getElementById('stxt').textContent=`翻译中 ${document.getElementById('sD').textContent} / ${document.getElementById('sT').textContent}…`;
+}
+function lg(tag,msg){
+  const box=document.getElementById('log');
+  const ts=new Date().toTimeString().slice(0,8);
+  const tm={ok:'[OK ]',err:'[ERR]',inf:'[INF]',wrn:'[WRN]',dim:'[---]'};
+  const div=document.createElement('div');div.className=`ll ${tag}`;
+  div.innerHTML=`<span class="ts">${ts}</span><span class="tg">${tm[tag]||''}</span><span class="lm">${msg.replace(/</g,'&lt;')}</span>`;
+  box.appendChild(div);box.scrollTop=box.scrollHeight;
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function saveProxy(){
+  const v=document.getElementById('proxyInput').value.trim();
+  if(!v){alert('请输入 Worker URL');return;}
+  localStorage.setItem('deepl_proxy',v);
+  document.getElementById('proxyStatus').style.display='block';
+  setTimeout(()=>document.getElementById('proxyStatus').style.display='none',2000);
+}
+
+// 页面加载时恢复保存的代理地址
+(function(){
+  const saved=localStorage.getItem('deepl_proxy');
+  if(saved){
+    document.getElementById('proxyInput').value=saved;
+    // 更新 JS 中的 PROXY_URL 变量
+    window._proxyUrl=saved;
+  }
+})();
+</script>
+</body>
+</html>

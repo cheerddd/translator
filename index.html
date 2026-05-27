@@ -3,209 +3,624 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>词条翻译工具</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Translator_Nora</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+:root{
+  --bg:#F6F5FF;
+  --white:#FFFFFF;
+  --p:#8B84E8;--p-l:#EEEDFB;--p-d:#7068D4;
+  --g:#10B981;--g-l:#ECFDF5;
+  --r:#EF4444;--r-l:#FEF2F2;
+  --a:#F59E0B;--a-l:#FFFBEB;
+  --b:#6B7FF0;--b-l:#EEF0FD;
+  --t1:#18172E;--t2:#4A4869;--t3:#A09EC0;
+  --bd:#E4E2F5;--bd2:#CEC9F0;
+  --sh:0 1px 4px rgba(0,0,0,.05);
+  --sh2:0 4px 20px rgba(139,132,232,.14);
+  --r4:4px;--r8:8px;--r12:12px;--r16:16px;
+  --font:'Inter','Noto Sans SC',sans-serif;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans SC',system-ui,sans-serif;background:#F0EFFF;color:#1A1A2E;min-height:100vh;padding:24px 16px 60px}
-.wrap{max-width:700px;margin:0 auto}
+html{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);height:100%;display:flex;flex-direction:column;overflow:hidden}
 
-/* Hero 渐变横幅 */
-.hero{background:linear-gradient(135deg,#6B72E8 0%,#9B59B6 100%);border-radius:18px;padding:30px 28px;text-align:center;margin-bottom:14px;box-shadow:0 4px 24px rgba(107,114,232,.25)}
-.hero-icon{font-size:38px;margin-bottom:10px}
-.hero h1{color:#fff;font-size:24px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px}
-.hero p{color:rgba(255,255,255,.78);font-size:13px;line-height:1.6}
+/* ── 顶部导航 ── */
+.nav{background:#FFFFFF;border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 24px;height:56px;flex-shrink:0;gap:0}
+.nav-brand{display:flex;align-items:center;gap:8px;margin-right:32px;text-decoration:none}
+.nav-logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#A89CF7,#C4B5FD);display:flex;align-items:center;justify-content:center;font-size:15px}
+.nav-title{font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-.3px}
+.nav-title span{color:var(--p)}
+.nav-tabs{display:flex;gap:2px;flex:1}
+.nav-tab{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--r8);font-size:13.5px;font-weight:500;color:var(--t2);cursor:pointer;border:none;background:none;transition:all .15s;white-space:nowrap}
+.nav-tab:hover{background:var(--bg);color:var(--t1)}
+.nav-tab.active{background:var(--p-l);color:var(--p)}
+.nav-tab .icon{font-size:15px}
 
-/* 卡片 */
-.card{background:#fff;border-radius:14px;margin-bottom:12px;box-shadow:0 1px 6px rgba(80,70,200,.08);overflow:hidden}
-.card-hdr{padding:14px 20px 11px;font-size:13px;font-weight:600;color:#534AB7;border-bottom:1px solid #F0EFFF;display:flex;align-items:center;gap:7px}
-.card-body{padding:16px 20px 18px}
+/* ── 主内容 ── */
+.main{flex:1;overflow-y:auto;padding:24px}
+.page{display:none;max-width:800px;margin:0 auto}
+.page.active{display:block}
 
-/* API Key */
-.key-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:500px){.key-grid{grid-template-columns:1fr}}
-.key-item label{display:block;font-size:11px;color:#9CA3AF;margin-bottom:5px;letter-spacing:.4px;text-transform:uppercase}
-.key-input{width:100%;background:#F5F4FF;border:1.5px solid #DDD6FE;border-radius:8px;padding:9px 12px;font-size:12.5px;font-family:monospace;color:#1A1A2E;outline:none;transition:border-color .2s,box-shadow .2s}
-.key-input:focus{border-color:#7C3AED;box-shadow:0 0 0 3px rgba(124,58,237,.12)}
-.key-note{margin-top:10px;font-size:11.5px;color:#9CA3AF}
+/* ── 卡片 ── */
+.card{background:var(--white);border:1px solid var(--bd);border-radius:var(--r12);margin-bottom:16px;overflow:hidden;box-shadow:var(--sh)}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;border-bottom:1px solid var(--bd)}
+.card-hdr-left{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--t1)}
+.card-hdr-icon{width:28px;height:28px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:14px}
+.card-body{padding:16px 18px 18px}
 
-/* 文件上传 */
-.upload-zone{border:1.5px dashed #C4B5FD;border-radius:10px;padding:26px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:#FAFAFF}
-.upload-zone:hover,.upload-zone.drag{border-color:#7C3AED;background:#F5F3FF}
-.upload-icon{font-size:30px;margin-bottom:8px}
-.upload-main{font-size:14px;font-weight:500;color:#374151;margin-bottom:3px}
-.upload-sub{font-size:12px;color:#9CA3AF}
+/* ── 表单元素 ── */
+label.lbl{display:block;font-size:11.5px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+input[type=text],input[type=password],textarea,select{width:100%;background:var(--bg);border:1px solid var(--bd2);border-radius:var(--r8);padding:9px 12px;font-size:13.5px;font-family:var(--font);color:var(--t1);outline:none;transition:border-color .15s,box-shadow .15s}
+input[type=text]:focus,input[type=password]:focus,textarea:focus,select:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(139,132,232,.14)}
+textarea{resize:vertical;min-height:90px;line-height:1.6}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.input-row{grid-template-columns:1fr}}
+
+/* ── 按钮 ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--r8);font-size:13.5px;font-weight:600;font-family:var(--font);cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,#A89CF7,#C4B5FD);color:#fff;box-shadow:0 3px 14px rgba(56,189,248,.3)}
+.btn-primary:hover{background:var(--p-d);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-success{background:var(--g);color:#fff}
+.btn-success:hover{background:#059669}
+.btn-outline{background:var(--white);color:var(--t2);border:1px solid var(--bd2)}
+.btn-outline:hover{border-color:var(--p);color:var(--p);background:var(--p-l)}
+.btn-danger{background:var(--r-l);color:var(--r);border:1px solid #FCA5A5}
+.btn-danger:hover{background:var(--r);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12.5px}
+.btn-full{width:100%}
+
+/* ── 状态徽章 ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;font-size:11.5px;font-weight:500}
+.badge-ok{background:var(--g-l);color:#065F46}
+.badge-err{background:var(--r-l);color:#991B1B}
+.badge-info{background:var(--b-l);color:#4B53C8}
+
+/* ── 上传区 ── */
+.upload-zone{border:1.5px dashed var(--bd2);border-radius:var(--r12);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--bg)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--p);background:var(--p-l)}
+.upload-icon{font-size:28px;margin-bottom:8px}
+.upload-main{font-size:14px;font-weight:500;color:var(--t1);margin-bottom:3px}
+.upload-sub{font-size:12px;color:var(--t3)}
 #fileInput{position:absolute;inset:0;opacity:0;cursor:pointer}
-.file-ok{margin-top:10px;padding:9px 14px;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;font-size:12.5px;color:#065F46;display:none;align-items:center;gap:7px}
+.file-ok{margin-top:10px;padding:9px 14px;background:var(--g-l);border:1px solid #A7F3D0;border-radius:var(--r8);font-size:12.5px;color:#065F46;display:none;align-items:center;gap:8px}
 .file-ok.show{display:flex}
 
-/* 语言 */
+/* ── 语言格子 ── */
 .lang-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.t-btn{font-size:12px;padding:5px 14px;border-radius:7px;border:1.5px solid #DDD6FE;background:#fff;color:#534AB7;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
-.t-btn:hover{background:#EDE9FE;border-color:#A78BFA}
-.sel-count{margin-left:auto;font-size:12px;color:#9CA3AF}
-.lang-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.sel-count{margin-left:auto;font-size:12px;color:var(--t3)}
+.lang-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 @media(max-width:560px){.lang-grid{grid-template-columns:repeat(2,1fr)}}
-.lang-chip{border:1.5px solid #E5E4F8;border-radius:9px;padding:8px 9px;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:12px;color:#374151;background:#FAFAFF;transition:all .15s;user-select:none;line-height:1.3}
-.lang-chip:hover{border-color:#A78BFA;background:#F5F3FF}
-.lang-chip.on{border-color:#534AB7;background:#EDE9FE;color:#3730A3;font-weight:600}
-.chip-box{width:14px;height:14px;border-radius:4px;border:1.5px solid #D1D5DB;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;transition:all .15s;background:#fff}
-.lang-chip.on .chip-box{border-color:#534AB7;background:#534AB7}
+.lang-chip{border:1px solid var(--bd);border-radius:var(--r8);padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);background:var(--bg);transition:all .12s;user-select:none}
+.lang-chip:hover{border-color:var(--p);color:var(--t1);background:var(--white)}
+.lang-chip.on{border-color:var(--p);background:var(--p-l);color:var(--p);font-weight:500}
+.chip-box{width:14px;height:14px;border-radius:4px;border:1.5px solid var(--bd2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;transition:all .15s;background:var(--white)}
+.lang-chip.on .chip-box{border-color:var(--p);background:var(--p)}
 
-/* 进度 */
+/* ── 进度 ── */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
-.stat{background:#F7F7FB;border-radius:10px;padding:12px 6px;text-align:center}
-.stat-n{font-size:26px;font-weight:700;color:#1A1A2E;line-height:1;font-variant-numeric:tabular-nums}
-.stat-n.bl{color:#3B82F6}.stat-n.rd{color:#EF4444}
-.stat-l{font-size:11px;color:#6B7280;margin-top:4px}
-.pb-track{background:#EDE9FE;border-radius:99px;height:8px;overflow:hidden;margin-bottom:8px}
-.pb-fill{height:8px;border-radius:99px;background:linear-gradient(90deg,#534AB7,#7C3AED);width:0%;transition:width .35s ease}
+.stat{background:var(--bg);border-radius:var(--r8);border:1px solid var(--bd);padding:12px 8px;text-align:center}
+.stat-n{font-size:24px;font-weight:700;color:var(--t1);line-height:1;font-variant-numeric:tabular-nums}
+.stat-n.bl{color:var(--b)}.stat-n.rd{color:var(--r)}.stat-n.gr{color:var(--g)}
+.stat-l{font-size:11px;color:var(--t3);margin-top:3px}
+.pb-wrap{background:var(--bg);border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px;border:1px solid var(--bd)}
+.pb-fill{height:6px;border-radius:99px;background:linear-gradient(90deg,#A89CF7,#C084FC);width:0%;transition:width .35s ease}
 .st-row{display:flex;justify-content:space-between;font-size:12px}
-.st-txt{color:#9CA3AF}.st-pct{color:#374151;font-weight:600;font-variant-numeric:tabular-nums}
+.st-txt{color:var(--t3)}.st-pct{color:var(--t2);font-weight:600}
 
-/* 按钮 */
-.btn-go{width:100%;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;background:linear-gradient(135deg,#534AB7,#7C3AED);color:#fff;margin:6px 0 10px;box-shadow:0 4px 18px rgba(83,74,183,.3);transition:opacity .15s,transform .1s}
-.btn-go:hover:not(:disabled){opacity:.91;transform:translateY(-1px)}
-.btn-go:active:not(:disabled){transform:translateY(0)}
-.btn-go:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
-.btn-dl{width:100%;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;background:linear-gradient(135deg,#059669,#10B981);color:#fff;margin:0 0 10px;box-shadow:0 4px 18px rgba(5,150,105,.22);display:none;transition:opacity .15s,transform .1s}
-.btn-dl:hover{opacity:.9;transform:translateY(-1px)}.btn-dl.show{display:block}
-
-/* 日志 */
-.log-box{background:#F7F7FB;border-radius:10px;padding:12px 14px;height:185px;overflow-y:auto;font-family:ui-monospace,'Menlo',monospace;font-size:11px;line-height:1.75;border:1px solid #EDE9FE}
+/* ── 日志 ── */
+.log-box{background:var(--bg);border:1px solid var(--bd);border-radius:var(--r8);padding:12px 14px;height:160px;overflow-y:auto;font-family:'SF Mono','Menlo',monospace;font-size:11px;line-height:1.75}
 .log-box::-webkit-scrollbar{width:4px}
-.log-box::-webkit-scrollbar-thumb{background:#DDD6FE;border-radius:99px}
-.ll{display:flex;gap:9px}
-.ll .ts{color:#9CA3AF;flex-shrink:0}
-.ll .tg{flex-shrink:0;font-weight:600;min-width:40px}
-.ll.ok .tg,.ll.ok .lm{color:#059669}
-.ll.err .tg,.ll.err .lm{color:#DC2626}
-.ll.inf .tg,.ll.inf .lm{color:#2563EB}
-.ll.wrn .tg,.ll.wrn .lm{color:#D97706}
-.ll.dim .tg,.ll.dim .lm{color:#9CA3AF}
+.log-box::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:99px}
+.ll{display:flex;gap:8px}
+.ll .ts{color:var(--t3);flex-shrink:0}
+.ll .tg{flex-shrink:0;font-weight:600;min-width:38px}
+.ll.ok .tg,.ll.ok .lm{color:var(--g)}
+.ll.err .tg,.ll.err .lm{color:var(--r)}
+.ll.inf .tg,.ll.inf .lm{color:var(--b)}
+.ll.wrn .tg,.ll.wrn .lm{color:var(--a)}
+.ll.dim .tg,.ll.dim .lm{color:var(--t3)}
+
+/* ── 术语表 ── */
+.glossary-input-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:10px}
+.glossary-table{width:100%;border-collapse:collapse;font-size:13px}
+.glossary-table th{background:var(--bg);color:var(--t3);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.4px;padding:8px 12px;border-bottom:1px solid var(--bd);text-align:left}
+.glossary-table td{padding:9px 12px;border-bottom:1px solid var(--bd);color:var(--t2);vertical-align:middle}
+.glossary-table tr:last-child td{border-bottom:none}
+.glossary-table tr:hover td{background:var(--bg)}
+.glossary-empty{text-align:center;padding:32px;color:var(--t3);font-size:13px}
+
+/* ── 文本翻译 ── */
+.text-translate-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.text-translate-grid{grid-template-columns:1fr}}
+.text-box{border:1px solid var(--bd);border-radius:var(--r8);background:var(--white);overflow:hidden}
+.text-box-hdr{padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--bd);font-size:12px;font-weight:500;color:var(--t2);display:flex;align-items:center;justify-content:space-between}
+.text-box textarea{border:none;border-radius:0;background:var(--white);min-height:120px;resize:none}
+.text-box textarea:focus{box-shadow:none;border-color:transparent}
+
+/* ── 设置页 ── */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--bd)}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:14px;font-weight:500;color:var(--t1)}
+.setting-desc{font-size:12px;color:var(--t3);margin-top:2px}
+
+/* ── 分割线 ── */
+.divider{border:none;border-top:1px solid var(--bd);margin:16px 0}
+
+/* ── 页面标题 ── */
+.page-hdr{margin-bottom:20px}
+.page-hdr h2{font-size:20px;font-weight:700;color:var(--t1);letter-spacing:-.3px}
+.page-hdr p{font-size:13.5px;color:var(--t2);margin-top:4px}
+
+/* ── 通知 ── */
+.notice{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:var(--r8);font-size:13px;margin-bottom:16px;line-height:1.5}
+.notice-info{background:var(--b-l);color:#1E40AF;border:1px solid #BFDBFE}
+.notice-ok{background:var(--g-l);color:#065F46;border:1px solid #A7F3D0}
+.notice-warn{background:var(--a-l);color:#92400E;border:1px solid #FDE68A}
+
+/* 文本翻译结果区 */
+.result-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.result-item{background:var(--white);border:1px solid var(--bd);border-radius:var(--r8);padding:12px 14px}
+.result-lang{font-size:11px;font-weight:600;color:var(--p);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.result-text{font-size:14px;color:var(--t1);line-height:1.6;user-select:text}
+.result-copy{float:right;font-size:11px;color:var(--t3);cursor:pointer;padding:2px 6px;border-radius:4px}
+.result-copy:hover{background:var(--bg);color:var(--p)}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<!-- Hero -->
-<div class="hero">
-  <div class="hero-icon">🌐</div>
-  <h1>词条翻译工具</h1>
-  <p>基于 DeepL API &nbsp;·&nbsp; F 列英文批量翻译为最多 20 种语言 &nbsp;·&nbsp; 翻译结果写入 G~Z 列</p>
-</div>
+<!-- 顶部导航 -->
+<nav class="nav">
+  <a class="nav-brand" href="#">
+    <div class="nav-logo" style="background:linear-gradient(135deg,#A89CF7,#C4B5FD)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+    <div class="nav-title">Translator<span>_Nora</span></div>
+  </a>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-page="excel" onclick="switchPage('excel',this)">
+      <span class="icon">📊</span> Excel 翻译
+    </button>
+    <button class="nav-tab" data-page="text" onclick="switchPage('text',this)">
+      <span class="icon">✏️</span> 文本翻译
+    </button>
+    <button class="nav-tab" data-page="glossary" onclick="switchPage('glossary',this)">
+      <span class="icon">📖</span> 术语表
+    </button>
+    <button class="nav-tab" data-page="settings" onclick="switchPage('settings',this)">
+      <span class="icon">⚙️</span> 设置
+    </button>
+  </div>
+</nav>
 
-<!-- API Key -->
-<div class="card" id="setupNotice" style="border:1.5px solid #FDE68A;background:#FFFBEB">
-  <div class="card-hdr" style="color:#92400E">⚙️&nbsp; 部署配置（首次使用需完成）</div>
-  <div class="card-body" style="font-size:13px;color:#78350F;line-height:1.8">
-    由于浏览器安全限制，需先部署一个免费中转服务：<br>
-    <strong>第 1 步</strong>：注册 <a href="https://workers.cloudflare.com" target="_blank" style="color:#7C3AED">Cloudflare Workers</a>（免费）<br>
-    <strong>第 2 步</strong>：新建 Worker，将 <code style="background:#FEF3C7;padding:1px 5px;border-radius:4px">worker.js</code> 的内容粘贴进去，点击部署<br>
-    <strong>第 3 步</strong>：复制 Worker 的 URL（格式：<code style="background:#FEF3C7;padding:1px 5px;border-radius:4px">https://xxx.workers.dev</code>）<br>
-    <strong>第 4 步</strong>：填入下方输入框并保存
-    <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
-      <input id="proxyInput" type="text" placeholder="https://your-worker.your-name.workers.dev"
-        style="flex:1;background:#fff;border:1.5px solid #FCD34D;border-radius:8px;padding:8px 12px;font-size:12.5px;outline:none;color:#1A1A2E">
-      <button onclick="saveProxy()" style="background:#7C3AED;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">保存</button>
+<div class="main">
+
+<!-- ══ Excel 翻译页 ══ -->
+<div class="page active" id="page-excel">
+  <div class="page-hdr">
+    <h2>Excel 批量翻译</h2>
+    <p>英文→多语言：读 F 列，结果写入 G~Z 列 &nbsp;·&nbsp; 中文→英文：读 E 列，结果写入 F 列</p>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-left">
+        <div class="card-hdr-icon" style="background:#EEEDFB">🔄</div>
+        翻译方向
+      </div>
     </div>
-    <div id="proxyStatus" style="margin-top:6px;font-size:12px;color:#059669;display:none">✅ 已保存！</div>
+    <div class="card-body" style="display:flex;gap:10px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;padding:10px 14px;border:1.5px solid var(--bd2);border-radius:var(--r8);transition:all .15s" id="dir-en-multi-lbl">
+        <input type="radio" name="xlsDir" id="dir-en-multi" value="en-multi" checked onchange="onXlsDirChange()" style="accent-color:var(--p)">
+        <div>
+          <div style="font-size:13.5px;font-weight:500;color:var(--t1)">英文 → 多语言</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:1px">读取 F 列英文，翻译结果写入 G~Z 列</div>
+        </div>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;padding:10px 14px;border:1.5px solid var(--bd2);border-radius:var(--r8);transition:all .15s" id="dir-zh-en-lbl">
+        <input type="radio" name="xlsDir" id="dir-zh-en" value="zh-en" onchange="onXlsDirChange()" style="accent-color:var(--p)">
+        <div>
+          <div style="font-size:13.5px;font-weight:500;color:var(--t1)">中文 → 英文</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:1px">读取 E 列中文，翻译结果写入 F 列</div>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <!-- 文件选择 -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-left">
+        <div class="card-hdr-icon" style="background:#EEEDFB">📄</div>
+        选择 Excel 文件
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm">
+        <div class="upload-icon">📊</div>
+        <div class="upload-main">点击选择或拖拽 Excel 文件到此处</div>
+        <div class="upload-sub">支持 .xlsx · .xls · .xlsm</div>
+      </div>
+      <div class="file-ok" id="fileOk"><span>✅</span><span id="fileOkTxt"></span></div>
+    </div>
+  </div>
+
+  <!-- 语言选择 -->
+  <div class="card" id="langCard">
+    <div class="card-hdr">
+      <div class="card-hdr-left">
+        <div class="card-hdr-icon" style="background:#ECFDF5">🌏</div>
+        选择目标语言
+      </div>
+      <span class="sel-count" id="selCount">已选 0 / 20 种</span>
+    </div>
+    <div class="card-body">
+      <div class="lang-toolbar">
+        <button class="btn btn-outline btn-sm" onclick="selAll()">全选</button>
+        <button class="btn btn-outline btn-sm" onclick="clrAll()">清空</button>
+      </div>
+      <div class="lang-grid" id="langGrid"></div>
+    </div>
+  </div>
+
+  <!-- 进度 -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-left">
+        <div class="card-hdr-icon" style="background:#EEEDFB">📊</div>
+        翻译进度
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="stats">
+        <div class="stat"><div class="stat-n" id="sT">0</div><div class="stat-l">总计</div></div>
+        <div class="stat"><div class="stat-n bl" id="sD">0</div><div class="stat-l">已完成</div></div>
+        <div class="stat"><div class="stat-n" id="sR">0</div><div class="stat-l">待翻译</div></div>
+        <div class="stat"><div class="stat-n rd" id="sF">0</div><div class="stat-l">失败</div></div>
+      </div>
+      <div class="pb-wrap"><div class="pb-fill" id="pb"></div></div>
+      <div class="st-row">
+        <span class="st-txt" id="stxt">请上传文件并选择语言后开始</span>
+        <span class="st-pct" id="spct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-bottom:16px">
+    <button class="btn btn-primary" id="goBtn" style="flex:1" onclick="doStart()">▶&nbsp; 开始翻译</button>
+    <button class="btn btn-success" id="dlBtn" style="flex:1;display:none" onclick="doDownload()">⬇&nbsp; 下载结果</button>
+  </div>
+
+  <!-- 日志 -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-left">
+        <div class="card-hdr-icon" style="background:#F6F5FF">🖥</div>
+        翻译日志
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('log').innerHTML=''">清空</button>
+    </div>
+    <div class="card-body" style="padding-bottom:14px">
+      <div class="log-box" id="log"></div>
+    </div>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-hdr">🔑&nbsp; DeepL API Keys</div>
-  <div class="card-body">
-    <div class="key-grid">
-      <div class="key-item"><label>Key 1</label><input class="key-input" id="key1" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx" value="f86770d4-62f9-4240-8937-6826a1cc511f:fx"></div>
-      <div class="key-item"><label>Key 2（备用，可选）</label><input class="key-input" id="key2" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx" value="d7a2a2ef-9f8a-422b-9c4f-ad9f63633d7e:fx"></div>
+<!-- ══ 文本翻译页 ══ -->
+<div class="page" id="page-text">
+  <div class="page-hdr">
+    <h2>文本翻译</h2>
+    <p>直接输入或粘贴词条，快速翻译为多种语言</p>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-left">
+        <div class="card-hdr-icon" style="background:#EEEDFB">✏️</div>
+        输入词条
+      </div>
     </div>
-    <div class="key-note">🔒 Key 仅在浏览器本地使用，不会上传至任何服务器</div>
+    <div class="card-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;flex:1;padding:9px 12px;border:1.5px solid var(--bd2);border-radius:var(--r8);transition:all .15s" id="tdir-en-lbl">
+          <input type="radio" name="txtDir" id="tdir-en" value="en" checked onchange="onTxtDirChange()" style="accent-color:var(--p)">
+          <span style="font-size:13px;font-weight:500;color:var(--t1)">英文 → 多语言</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;flex:1;padding:9px 12px;border:1.5px solid var(--bd2);border-radius:var(--r8);transition:all .15s" id="tdir-zh-lbl">
+          <input type="radio" name="txtDir" id="tdir-zh" value="zh" onchange="onTxtDirChange()" style="accent-color:var(--p)">
+          <span style="font-size:13px;font-weight:500;color:var(--t1)">中文 → 英文</span>
+        </label>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="lbl" id="textInputLabel">每行一个词条（支持批量粘贴）</label>
+        <textarea id="textInput" placeholder="例如：&#10;vehicle&#10;fleet management&#10;false alarm&#10;dashboard" style="min-height:110px"></textarea>
+      </div>
+
+      <div style="margin-bottom:14px" id="textLangSection">
+        <label class="lbl">目标语言（可多选）</label>
+        <div class="lang-toolbar" style="margin-top:8px">
+          <button class="btn btn-outline btn-sm" onclick="textSelAll()">全选</button>
+          <button class="btn btn-outline btn-sm" onclick="textClrAll()">清空</button>
+        </div>
+        <div class="lang-grid" id="textLangGrid"></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="textGoBtn" onclick="doTextTranslate()">▶&nbsp; 翻译</button>
+    </div>
+  </div>
+
+  <div id="textResults" style="display:none">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-left">
+          <div class="card-hdr-icon" style="background:#F0FDF4">📋</div>
+          翻译结果
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="exportTextResult()">⬇ 导出 Excel</button>
+      </div>
+      <div class="card-body">
+        <div id="textResultBody"></div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- 文件 -->
-<div class="card">
-  <div class="card-hdr">📄&nbsp; 选择 Excel 文件</div>
-  <div class="card-body">
-    <div class="upload-zone" id="uploadZone">
-      <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm">
-      <div class="upload-icon">📊</div>
-      <div class="upload-main">点击选择或拖拽 Excel 文件到此处</div>
-      <div class="upload-sub">支持 .xlsx · .xls · .xlsm</div>
+<!-- ══ 术语表页 ══ -->
+<div class="page" id="page-glossary">
+  <div class="page-hdr">
+    <h2>术语表</h2>
+    <p>维护固定的翻译对照表，翻译时自动应用（目前用于翻译前替换源文本）</p>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-left">
+        <div class="card-hdr-icon" style="background:#FFFBEB">➕</div>
+        添加术语
+      </div>
     </div>
-    <div class="file-ok" id="fileOk"><span>✅</span><span id="fileOkTxt"></span></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label class="lbl">中文</label>
+          <input type="text" id="gZh" placeholder="例如：误报">
+        </div>
+        <div>
+          <label class="lbl">英文</label>
+          <input type="text" id="gEn" placeholder="例如：False Alarm">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary btn-sm" onclick="addGlossaryItem()">添加</button>
+        <button class="btn btn-outline btn-sm" onclick="exportGlossary()">⬇ 导出</button>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer">
+          ⬆ 导入 <input type="file" id="gImport" accept=".json" style="display:none" onchange="importGlossary(this)">
+        </label>
+        <span id="gMsg" style="font-size:12px;color:var(--g)"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-left">
+        <div class="card-hdr-icon" style="background:#ECFDF5">📖</div>
+        术语列表
+      </div>
+      <span id="glossaryCount" style="font-size:12px;color:var(--t3)">0 条</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div id="glossaryBody">
+        <div class="glossary-empty">暂无术语，请在上方添加</div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- 语言 -->
-<div class="card">
-  <div class="card-hdr">🌏&nbsp; 选择目标语言 <span class="sel-count" id="selCount">已选 0 / 20 种</span></div>
-  <div class="card-body">
-    <div class="lang-toolbar">
-      <button class="t-btn" onclick="selAll()">全选</button>
-      <button class="t-btn" onclick="clrAll()">清空</button>
+<!-- ══ 设置页 ══ -->
+<div class="page" id="page-settings">
+  <div class="page-hdr">
+    <h2>设置</h2>
+    <p>管理 API Key 和系统配置</p>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-left">
+        <div class="card-hdr-icon" style="background:#FFFBEB">🔑</div>
+        DeepL API Keys
+      </div>
     </div>
-    <div class="lang-grid" id="langGrid"></div>
+    <div class="card-body">
+      <div class="notice notice-info" style="margin-bottom:14px">
+        🔒 Key 仅保存在你的浏览器本地（localStorage），不上传至任何服务器
+      </div>
+      <div class="input-row" style="margin-bottom:12px">
+        <div>
+          <label class="lbl">Key 1（主要）</label>
+          <input type="password" id="settingKey1" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx">
+        </div>
+        <div>
+          <label class="lbl">Key 2（备用，可选）</label>
+          <input type="password" id="settingKey2" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx">
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label class="lbl">Cloudflare Worker 代理地址</label>
+        <input type="text" id="settingProxy" value="https://deepl-proxy.dongningcheer.workers.dev/">
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+        <button class="btn btn-outline" onclick="testKey()">测试连接</button>
+        <span id="keyStatus" style="font-size:12px"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-left">
+        <div class="card-hdr-icon" style="background:#EEEDFB">ℹ️</div>
+        关于 Translator_Nora
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="setting-row">
+        <div><div class="setting-label">版本</div></div>
+        <span style="font-size:13px;color:var(--t3)">v2.0</span>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">翻译引擎</div></div>
+        <span class="badge badge-info">DeepL API Free</span>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">支持语言数</div></div>
+        <span style="font-size:13px;color:var(--t3)">20 种</span>
+      </div>
+      <div class="setting-row" style="border:none">
+        <div><div class="setting-label">数据存储</div></div>
+        <span style="font-size:13px;color:var(--t3)">浏览器本地</span>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- 进度 -->
-<div class="card">
-  <div class="card-hdr">📊&nbsp; 翻译进度</div>
-  <div class="card-body">
-    <div class="stats">
-      <div class="stat"><div class="stat-n" id="sT">0</div><div class="stat-l">总计（条×语言）</div></div>
-      <div class="stat"><div class="stat-n bl" id="sD">0</div><div class="stat-l">已完成</div></div>
-      <div class="stat"><div class="stat-n" id="sR">0</div><div class="stat-l">待翻译</div></div>
-      <div class="stat"><div class="stat-n rd" id="sF">0</div><div class="stat-l">失败</div></div>
-    </div>
-    <div class="pb-track"><div class="pb-fill" id="pb"></div></div>
-    <div class="st-row">
-      <span class="st-txt" id="stxt">请上传文件并选择语言后开始</span>
-      <span class="st-pct" id="spct">0%</span>
-    </div>
-  </div>
-</div>
+</div><!-- main -->
 
-<button class="btn-go" id="goBtn" onclick="doStart()">▶&nbsp;&nbsp;开始翻译</button>
-<button class="btn-dl" id="dlBtn" onclick="doDownload()">⬇&nbsp;&nbsp;下载翻译结果</button>
-
-<!-- 日志 -->
-<div class="card">
-  <div class="card-hdr">🖥&nbsp; 翻译日志</div>
-  <div class="card-body" style="padding-bottom:14px"><div class="log-box" id="log"></div></div>
-</div>
-
-</div>
 <script>
-const LANGS=[["西班牙文 (Spanish)","ES","Spanish"],["葡萄牙文 (Portuguese)","PT-PT","Portuguese"],["法语 (French)","FR","French"],["繁體中文·香港 (Chinese HK)","ZH-HANT","Chinese (HK)"],["俄罗斯语 (Russian)","RU","Russian"],["德语 (German)","DE","German"],["日语 (Japanese)","JA","Japanese"],["泰语 (Thai)","TH","Thai"],["阿拉伯语 (Arabic)","AR","Arabic"],["越南语 (Vietnamese)","VI","Vietnamese"],["土耳其语 (Turkish)","TR","Turkish"],["波兰语 (Polish)","PL","Polish"],["塞尔维亚语 (Serbian)","SR","Serbian"],["意大利语 (Italian)","IT","Italian"],["希伯来语 (Hebrew)","HE","Hebrew"],["塔吉克语 (Tajik)","TG","Tajik"],["丹麦语 (Danish)","DA","Danish"],["荷兰语 (Dutch)","NL","Dutch"],["瑞典语 (Swedish)","SV","Swedish"],["芬兰语 (Finnish)","FI","Finnish"]];
+// ── 常量 ──────────────────────────────────────────────────
+const LANGS=[
+  ["西班牙文","ES","Spanish"],["葡萄牙文","PT-PT","Portuguese"],
+  ["法语","FR","French"],["繁體中文·香港","ZH-HANT","Chinese (HK)"],
+  ["俄罗斯语","RU","Russian"],["德语","DE","German"],
+  ["日语","JA","Japanese"],["泰语","TH","Thai"],
+  ["阿拉伯语","AR","Arabic"],["越南语","VI","Vietnamese"],
+  ["土耳其语","TR","Turkish"],["波兰语","PL","Polish"],
+  ["塞尔维亚语","SR","Serbian"],["意大利语","IT","Italian"],
+  ["希伯来语","HE","Hebrew"],["塔吉克语","TG","Tajik"],
+  ["丹麦语","DA","Danish"],["荷兰语","NL","Dutch"],
+  ["瑞典语","SV","Swedish"],["芬兰语","FI","Finnish"],
+];
 
-let wb=null,origName='',sel=new Set(),blob=null;
+// ── 状态 ──────────────────────────────────────────────────
+let wb=null, origName='', selLangs=new Set(), textSelLangs=new Set();
+let blob=null, glossary=[], textResults=null;
+const PROXY_DEFAULT='https://deepl-proxy.dongningcheer.workers.dev/';
 
-// 语言格子
-const grid=document.getElementById('langGrid');
-LANGS.forEach(([name])=>{
-  const el=document.createElement('div');
-  el.className='lang-chip';el.dataset.name=name;
-  el.innerHTML=`<div class="chip-box"></div><span>${name}</span>`;
-  el.onclick=()=>tog(name,el);grid.appendChild(el);
-});
-function tog(name,el){if(sel.has(name)){sel.delete(name);el.classList.remove('on');el.querySelector('.chip-box').textContent='';}else{sel.add(name);el.classList.add('on');el.querySelector('.chip-box').textContent='✓';}cnt();}
-function selAll(){document.querySelectorAll('.lang-chip').forEach(el=>{sel.add(el.dataset.name);el.classList.add('on');el.querySelector('.chip-box').textContent='✓';});cnt();}
-function clrAll(){document.querySelectorAll('.lang-chip').forEach(el=>{sel.delete(el.dataset.name);el.classList.remove('on');el.querySelector('.chip-box').textContent='';});cnt();}
-function cnt(){document.getElementById('selCount').textContent=`已选 ${sel.size} / 20 种`;}
+// ── 设置读写 ──────────────────────────────────────────────
+function loadSettings(){
+  const k1=localStorage.getItem('nora_key1')||'';
+  const k2=localStorage.getItem('nora_key2')||'';
+  const px=localStorage.getItem('nora_proxy')||PROXY_DEFAULT;
+  document.getElementById('settingKey1').value=k1;
+  document.getElementById('settingKey2').value=k2;
+  document.getElementById('settingProxy').value=px;
+  return {keys:[k1,k2].filter(k=>k.trim()), proxy:px};
+}
+function saveSettings(){
+  localStorage.setItem('nora_key1',document.getElementById('settingKey1').value.trim());
+  localStorage.setItem('nora_key2',document.getElementById('settingKey2').value.trim());
+  localStorage.setItem('nora_proxy',document.getElementById('settingProxy').value.trim());
+  const s=document.getElementById('keyStatus');
+  s.style.color='var(--g)'; s.textContent='✅ 已保存';
+  setTimeout(()=>s.textContent='',2000);
+}
+async function testKey(){
+  const {keys,proxy}=loadSettings();
+  if(!keys.length){alert('请先填写 API Key');return;}
+  const s=document.getElementById('keyStatus');
+  s.style.color='var(--t3)';s.textContent='测试中…';
+  try{
+    const res=await callDeepL(['hello'],keys,'ZH-HANT',proxy);
+    s.style.color='var(--g)';s.textContent=`✅ 连接正常：hello → ${res[0]}`;
+  }catch(e){s.style.color='var(--r)';s.textContent='❌ '+e.message;}
+}
 
-// 文件
+// ── 页面切换 ──────────────────────────────────────────────
+function switchPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── 语言格子 ──────────────────────────────────────────────
+function buildLangGrid(containerId, selSet, countId, storageKey){
+  const grid=document.getElementById(containerId);
+  // 从 localStorage 恢复选择
+  if(storageKey){
+    try{const saved=JSON.parse(localStorage.getItem(storageKey)||'[]');saved.forEach(n=>selSet.add(n));}catch{}
+  }
+  LANGS.forEach(([name,code])=>{
+    const el=document.createElement('div');
+    el.className='lang-chip'+(selSet.has(name)?' on':'');
+    el.dataset.name=name;el.dataset.code=code;
+    const checked=selSet.has(name)?'✓':'';
+    el.innerHTML=`<div class="chip-box">${checked}</div><span>${name}</span>`;
+    el.onclick=()=>{
+      if(selSet.has(name)){selSet.delete(name);el.classList.remove('on');el.querySelector('.chip-box').textContent='';}
+      else{selSet.add(name);el.classList.add('on');el.querySelector('.chip-box').textContent='✓';}
+      if(countId)document.getElementById(countId).textContent=`已选 ${selSet.size} / 20 种`;
+      if(storageKey)localStorage.setItem(storageKey,JSON.stringify([...selSet]));
+    };
+    grid.appendChild(el);
+  });
+  if(countId)document.getElementById(countId).textContent=`已选 ${selSet.size} / 20 种`;
+}
+// ── 翻译方向切换 ────────────────────────────────────────
+function onXlsDirChange(){
+  const isZhEn=document.getElementById('dir-zh-en').checked;
+  document.getElementById('langCard').style.display=isZhEn?'none':'block';
+  // 高亮选中的方向卡片
+  document.getElementById('dir-en-multi-lbl').style.borderColor=isZhEn?'var(--bd2)':'var(--p)';
+  document.getElementById('dir-zh-en-lbl').style.borderColor=isZhEn?'var(--p)':'var(--bd2)';
+}
+function onTxtDirChange(){
+  const isZh=document.getElementById('tdir-zh').checked;
+  document.getElementById('textLangSection').style.display=isZh?'none':'block';
+  document.getElementById('textInputLabel').textContent=isZh?'每行一个中文词条（支持批量粘贴）':'每行一个英文词条（支持批量粘贴）';
+  document.getElementById('textInput').placeholder=isZh?'例如：\n误报\n车队管理\n仪表盘\n蜂窝网络':'例如：\nvehicle\nfleet management\nfalse alarm\ndashboard';
+  document.getElementById('tdir-en-lbl').style.borderColor=isZh?'var(--bd2)':'var(--p)';
+  document.getElementById('tdir-zh-lbl').style.borderColor=isZh?'var(--p)':'var(--bd2)';
+}
+
+function selAll(){
+  document.querySelectorAll('#langGrid .lang-chip').forEach(el=>{
+    selLangs.add(el.dataset.name);el.classList.add('on');el.querySelector('.chip-box').textContent='✓';
+  });
+  document.getElementById('selCount').textContent=`已选 ${selLangs.size} / 20 种`;
+  localStorage.setItem('nora_excel_langs',JSON.stringify([...selLangs]));
+}
+function clrAll(){
+  document.querySelectorAll('#langGrid .lang-chip').forEach(el=>{
+    selLangs.delete(el.dataset.name);el.classList.remove('on');el.querySelector('.chip-box').textContent='';
+  });
+  document.getElementById('selCount').textContent='已选 0 / 20 种';
+  localStorage.setItem('nora_excel_langs',JSON.stringify([]));
+}
+function textSelAll(){
+  document.querySelectorAll('#textLangGrid .lang-chip').forEach(el=>{
+    textSelLangs.add(el.dataset.name);el.classList.add('on');el.querySelector('.chip-box').textContent='✓';
+  });
+  localStorage.setItem('nora_text_langs',JSON.stringify([...textSelLangs]));
+}
+function textClrAll(){
+  document.querySelectorAll('#textLangGrid .lang-chip').forEach(el=>{
+    textSelLangs.delete(el.dataset.name);el.classList.remove('on');el.querySelector('.chip-box').textContent='';
+  });
+  localStorage.setItem('nora_text_langs',JSON.stringify([]));
+}
+
+// ── 文件上传 ──────────────────────────────────────────────
 const zone=document.getElementById('uploadZone');
 zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
 zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
-zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');if(e.dataTransfer.files[0])load(e.dataTransfer.files[0]);});
-document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])load(e.target.files[0]);});
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
+document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0]);});
 
-function load(file){
+function loadFile(file){
   origName=file.name;
   const rd=new FileReader();
   rd.onload=e=>{
@@ -215,129 +630,134 @@ function load(file){
       const range=XLSX.utils.decode_range(ws['!ref']||'A1');
       let n=0;
       for(let r=range.s.r;r<=range.e.r;r++){const c=ws[XLSX.utils.encode_cell({r,c:5})];if(c&&c.v!==undefined&&String(c.v).trim())n++;}
-      document.getElementById('fileOkTxt').textContent=`${file.name} · 检测到 F 列共 ${n} 条词条`;
+      document.getElementById('fileOkTxt').textContent=`${file.name} · F 列共 ${n} 条词条`;
       document.getElementById('fileOk').classList.add('show');
       lg('inf',`已加载：${file.name}，F 列 ${n} 条`);
-      blob=null;document.getElementById('dlBtn').classList.remove('show');
+      blob=null;document.getElementById('dlBtn').style.display='none';
     }catch(e){lg('err','读取失败：'+e.message);}
   };
   rd.readAsArrayBuffer(file);
 }
 
-// DeepL — 通过 Cloudflare Worker 代理（解决 CORS）
-// 部署 worker.js 后将下面的 URL 替换为你的 Worker 地址
-const PROXY_URL = 'https://deepl-proxy.dongningcheer.workers.dev/';
-
-async function deepl(texts,lang,keys){
+// ── DeepL 调用 ────────────────────────────────────────────
+async function callDeepL(texts, keys, targetLang, proxy, srcLang){
   let last;
+  const url=proxy||PROXY_DEFAULT;
   for(const key of keys){
     if(!key.trim())continue;
     try{
-      const url = (window._proxyUrl) || (PROXY_URL !== 'YOUR_WORKER_URL' ? PROXY_URL : null);
-      if(!url){throw new Error('请先在页面顶部填写并保存 Cloudflare Worker 地址！');}
       const r=await fetch(url,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({key:key.trim(),texts,target_lang:lang,source_lang:'EN'})
+        body:JSON.stringify({key:key.trim(),texts,target_lang:targetLang,source_lang:srcLang||'EN'})
       });
       if(r.ok){const d=await r.json();return d.translations.map(t=>t.text);}
       const t=await r.text();
       if(r.status===456){last=new Error('额度超限');continue;}
       if(r.status===403){last=new Error('Key无效(403)');continue;}
-      throw new Error('HTTP '+r.status+': '+t.slice(0,120));
-    }catch(e){ last=e; }
+      throw new Error(`HTTP ${r.status}: ${t.slice(0,100)}`);
+    }catch(e){last=e;}
   }
-  throw last||new Error('所有 Key 均不可用');
+  throw last||new Error('请在设置页填写有效的 API Key');
 }
 
-// 翻译主流程
+// ── Excel 翻译 ────────────────────────────────────────────
 async function doStart(){
   if(!wb){alert('请先选择 Excel 文件！');return;}
-  if(!sel.size){alert('请至少勾选一种目标语言！');return;}
-  const keys=[document.getElementById('key1').value,document.getElementById('key2').value].filter(k=>k.trim());
-  if(!keys.length){alert('请填写至少一个 DeepL API Key！');return;}
+  if(!selLangs.size){alert('请至少勾选一种目标语言！');return;}
+  const {keys,proxy}=loadSettings();
+  if(!keys.length){alert('请在「设置」页填写 DeepL API Key！');return;}
 
   const goBtn=document.getElementById('goBtn');
-  goBtn.disabled=true;goBtn.textContent='⏳  翻译中…';
-  document.getElementById('dlBtn').classList.remove('show');blob=null;
+  goBtn.disabled=true;goBtn.textContent='⏳ 翻译中…';
+  document.getElementById('dlBtn').style.display='none';blob=null;
 
-  const selL=LANGS.filter(([name])=>sel.has(name));
+  const selL=LANGS.filter(([name])=>selLangs.has(name));
   const nL=selL.length;
-
   const book=XLSX.read(XLSX.write(wb,{bookType:'xlsx',type:'array'}),{type:'array',cellStyles:true});
   const wsName=book.SheetNames[0];
   const ws=book.Sheets[wsName];
   const range=XLSX.utils.decode_range(ws['!ref']||'A1');
 
+  // 中→英：读E列(index 4)；英→多语言：读F列(index 5)
+  const srcCol=isZhEn?4:5;
+  const srcColName=isZhEn?'E':'F';
   const entries=[];
   for(let r=range.s.r;r<=range.e.r;r++){
-    const c=ws[XLSX.utils.encode_cell({r,c:5})];
+    const c=ws[XLSX.utils.encode_cell({r,c:srcCol})];
     if(c&&c.v!==undefined&&String(c.v).trim())entries.push({row:r,text:String(c.v).trim()});
   }
-  if(!entries.length){lg('err','F 列无词条');goBtn.disabled=false;goBtn.textContent='▶  开始翻译';return;}
+  if(!entries.length){lg('err',`${srcColName} 列无词条`);goBtn.disabled=false;goBtn.textContent='▶ 开始翻译';return;}
 
   const nR=entries.length,total=nR*nL;
   let done=0,fails=0;
   ss(total,0,total,0);pp(0);
-  lg('inf',`${nR} 条词条 × ${nL} 种语言 = ${total} 次翻译`);
+  lg('inf',`${nR} 条词条 × ${nL} 语言 = ${total} 次翻译`);
 
-  const hs={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{patternType:'solid',fgColor:{rgb:'534AB7'}},alignment:{horizontal:'center',vertical:'center'}};
+  const hs={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{patternType:'solid',fgColor:{rgb:'5B5BD6'}},alignment:{horizontal:'center',vertical:'center'}};
 
-  // 检查是否需要插入表头行
   if(entries.length&&entries[0].row===0){
+    // 第一行就是数据，插入表头行
     const shifted={};
     for(const addr in ws){
       if(addr.startsWith('!')){shifted[addr]=ws[addr];continue;}
       const ref=XLSX.utils.decode_cell(addr);ref.r+=1;
       shifted[XLSX.utils.encode_cell(ref)]=ws[addr];
     }
-    Object.assign(ws,shifted);
-    entries.forEach(e=>e.row+=1);
-    range.e.r+=1;ws['!ref']=XLSX.utils.encode_range(range);
+    Object.assign(ws,shifted);entries.forEach(e=>e.row+=1);range.e.r+=1;
+    ws['!ref']=XLSX.utils.encode_range(range);
   }
 
-  // 写表头
-  const fa=XLSX.utils.encode_cell({r:0,c:5});
-  if(!ws[fa]||!ws[fa].v)ws[fa]={v:'English',t:'s',s:hs};
-  selL.forEach(([,,hdr],i)=>{
-    const col=6+i;
-    ws[XLSX.utils.encode_cell({r:0,c:col})]={v:hdr,t:'s',s:hs};
-    if(col>range.e.c)range.e.c=col;
-  });
+  if(isZhEn){
+    const eHdr=XLSX.utils.encode_cell({r:0,c:4});
+    if(!ws[eHdr]||!ws[eHdr].v)ws[eHdr]={v:'中文',t:'s',s:hs};
+    ws[XLSX.utils.encode_cell({r:0,c:5})]={v:'English',t:'s',s:hs};
+    if(5>range.e.c)range.e.c=5;
+  } else {
+    const fa=XLSX.utils.encode_cell({r:0,c:5});
+    if(!ws[fa]||!ws[fa].v)ws[fa]={v:'English',t:'s',s:hs};
+    selL.forEach(([,,hdr],i)=>{
+      const col=6+i;
+      ws[XLSX.utils.encode_cell({r:0,c:col})]={v:hdr,t:'s',s:hs};
+      if(col>range.e.c)range.e.c=col;
+    });
+  }
   ws['!ref']=XLSX.utils.encode_range(range);
   ws['!cols']=ws['!cols']||[];
-  for(let c=5;c<=range.e.c;c++)ws['!cols'][c]={wch:24};
+  const _startCol=isZhEn?4:5;
+  for(let c=_startCol;c<=range.e.c;c++)ws['!cols'][c]={wch:24};
 
-  // 逐语言翻译
   for(let li=0;li<selL.length;li++){
     const [langName,langCode]=selL[li];
-    const col=6+li;
-    lg('inf',`[${li+1}/${nL}] 翻译 ${langName}…`);
+    const col=isZhEn?5:(6+li);  // 中→英写F列(5)，英→多语言写G+列(6+)
+    lg('inf',`[${li+1}/${nL}] ${langName}…`);
     for(let i=0;i<entries.length;i+=50){
       const batch=entries.slice(i,i+50);
+      // 先翻译，再应用术语表替换
+      const texts=batch.map(e=>e.text);
       try{
-        const res=await deepl(batch.map(e=>e.text),langCode,keys);
+        const res=await callDeepL(texts,keys,langCode,proxy);
         batch.forEach((e,j)=>{
-          ws[XLSX.utils.encode_cell({r:e.row,c:col})]={v:res[j],t:'s'};
-          const o=e.text.length>14?e.text.slice(0,14)+'…':e.text;
-          const rv=res[j].length>14?res[j].slice(0,14)+'…':res[j];
-          lg('ok',`${langName.slice(0,5)}  行${e.row+1}  ${o} → ${rv}`);
+          const finalText=applyGlossaryResult(res[j],langCode);
+          ws[XLSX.utils.encode_cell({r:e.row,c:col})]={v:finalText,t:'s'};
+          const o=e.text.length>16?e.text.slice(0,16)+'…':e.text;
+          const rv=res[j].length>16?res[j].slice(0,16)+'…':res[j];
+          lg('ok',`${langName}  行${e.row+1}  ${o} → ${rv}`);
         });
         done+=batch.length;
       }catch(e){lg('err',`${langName}: ${e.message}`);fails+=batch.length;done+=batch.length;}
       ss(total,done,Math.max(0,total-done),fails);pp(Math.round(done/total*100));
-      await sleep(100);
+      await sleep(80);
     }
   }
 
-  lg('wrn','生成 Excel 文件…');
+  lg('wrn','生成文件…');
   const arr=XLSX.write(book,{bookType:'xlsx',type:'array',cellStyles:true});
   blob=new Blob([arr],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  pp(100);
-  document.getElementById('stxt').textContent=`✅  完成！成功 ${done-fails} 条，失败 ${fails} 条`;
-  lg('ok','✅ 点击下方绿色按钮下载文件');
-  goBtn.disabled=false;goBtn.textContent='▶  重新翻译';
-  document.getElementById('dlBtn').classList.add('show');
+  pp(100);document.getElementById('stxt').textContent=`✅ 完成！成功 ${done-fails} 条，失败 ${fails} 条`;
+  lg('ok','✅ 点击「下载结果」按钮保存文件');
+  goBtn.disabled=false;goBtn.textContent='▶ 重新翻译';
+  document.getElementById('dlBtn').style.display='block';
 }
 
 function doDownload(){
@@ -347,10 +767,119 @@ function doDownload(){
   const a=document.createElement('a');a.href=url;a.download=`${base}_translated.xlsx`;a.click();URL.revokeObjectURL(url);
 }
 
-function ss(t,d,r,f){document.getElementById('sT').textContent=t;document.getElementById('sD').textContent=d;document.getElementById('sR').textContent=r;document.getElementById('sF').textContent=f;}
+// ── 文本翻译 ──────────────────────────────────────────────
+async function doTextTranslate(){
+  const raw=document.getElementById('textInput').value.trim();
+  if(!raw){alert('请输入要翻译的词条');return;}
+  if(!textSelLangs.size){alert('请至少选择一种目标语言');return;}
+  const {keys,proxy}=loadSettings();
+  if(!keys.length){alert('请在「设置」页填写 API Key');return;}
+
+  const texts=raw.split('\n').map(s=>s.trim()).filter(Boolean);
+  const selL=LANGS.filter(([name])=>textSelLangs.has(name));
+  const btn=document.getElementById('textGoBtn');
+  btn.disabled=true;btn.textContent='⏳ 翻译中…';
+
+  const results={};
+  for(const [langName,langCode] of selL){
+    try{
+      const res=await callDeepL(texts,keys,langCode,proxy);
+      results[langName]=res.map(r=>applyGlossaryResult(r,langCode));
+    }catch(e){results[langName]=texts.map(()=>'[翻译失败]');}
+    await sleep(80);
+  }
+
+  textResults={texts,langs:selL,results};
+  renderTextResults(texts,selL,results);
+  btn.disabled=false;btn.textContent='▶ 翻译';
+  document.getElementById('textResults').style.display='block';
+}
+
+function renderTextResults(texts,langs,results){
+  const body=document.getElementById('textResultBody');
+
+  // 表格展示
+  let html=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="background:var(--bg)">
+      <th style="padding:8px 12px;border-bottom:1px solid var(--bd);text-align:left;color:var(--t3);font-size:11px;font-weight:500;text-transform:uppercase">英文原文</th>`;
+  langs.forEach(([name])=>{html+=`<th style="padding:8px 12px;border-bottom:1px solid var(--bd);text-align:left;color:var(--t3);font-size:11px;font-weight:500;text-transform:uppercase">${name}</th>`;});
+  html+=`</tr></thead><tbody>`;
+  texts.forEach((t,i)=>{
+    html+=`<tr style="border-bottom:1px solid var(--bd)"><td style="padding:9px 12px;color:var(--t2)">${t}</td>`;
+    langs.forEach(([name])=>{html+=`<td style="padding:9px 12px;color:var(--t1)">${(results[name]||[])[i]||''}</td>`;});
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  body.innerHTML=html;
+}
+
+function exportTextResult(){
+  if(!textResults)return;
+  const {texts,langs,results}=textResults;
+  const rows=[['English',...langs.map(([name])=>name)]];
+  texts.forEach((t,i)=>rows.push([t,...langs.map(([name])=>(results[name]||[])[i]||'')]));
+  const ws2=XLSX.utils.aoa_to_sheet(rows);
+  const wb2=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb2,ws2,'Translations');
+  XLSX.writeFile(wb2,'text_translations.xlsx');
+}
+
+// ── 术语表 ────────────────────────────────────────────────
+function loadGlossary(){
+  try{glossary=JSON.parse(localStorage.getItem('nora_glossary')||'[]');}catch{glossary=[];}
+  renderGlossary();
+}
+function saveGlossaryData(){localStorage.setItem('nora_glossary',JSON.stringify(glossary));}
+function renderGlossary(){
+  document.getElementById('glossaryCount').textContent=`${glossary.length} 条`;
+  const body=document.getElementById('glossaryBody');
+  if(!glossary.length){body.innerHTML='<div class="glossary-empty">暂无术语，请在上方添加</div>';return;}
+  let html=`<table class="glossary-table"><thead><tr><th>中文</th><th>英文</th><th style="width:60px"></th></tr></thead><tbody>`;
+  glossary.forEach((item,i)=>{
+    const zh=item.zh||'';const en=item.en_text||item.trans||'';
+    html+=`<tr><td>${zh}</td><td>${en}</td><td><button class="btn btn-danger btn-sm" onclick="removeGlossary(${i})">删除</button></td></tr>`;
+  });
+  html+=`</tbody></table>`;body.innerHTML=html;
+}
+function addGlossaryItem(){
+  const zh=document.getElementById('gZh').value.trim();
+  const en_text=document.getElementById('gEn').value.trim();
+  if(!zh||!en_text){showGMsg('请填写中文和英文');return;}
+  glossary.push({zh,en_text});saveGlossaryData();renderGlossary();
+  document.getElementById('gZh').value='';document.getElementById('gEn').value='';
+  showGMsg('已添加 ✅');
+}
+function applyGlossaryZhEn(text){
+  glossary.forEach(g=>{if(g.zh&&g.en_text)text=text.replace(new RegExp(g.zh.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&'),'g'),g.en_text);});
+  return text;
+}
+function removeGlossary(i){glossary.splice(i,1);saveGlossaryData();renderGlossary();}
+function showGMsg(m){const el=document.getElementById('gMsg');el.textContent=m;setTimeout(()=>el.textContent='',2000);}
+function exportGlossary(){
+  const a=document.createElement('a');
+  a.href='data:application/json,'+encodeURIComponent(JSON.stringify(glossary,null,2));
+  a.download='nora_glossary.json';a.click();
+}
+function importGlossary(input){
+  const f=input.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=e=>{try{const d=JSON.parse(e.target.result);if(Array.isArray(d)){glossary=[...glossary,...d];saveGlossaryData();renderGlossary();showGMsg(`已导入 ${d.length} 条`);}}catch{showGMsg('格式错误');}};
+  rd.readAsText(f);
+}
+function applyGlossary(text,langCode){return text;}
+function applyGlossaryResult(text,langCode){
+  glossary.filter(g=>g.code===langCode).forEach(g=>{
+    text=text.replace(new RegExp(g.trans.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),g.trans);
+  });
+  return text;
+}
+
+// ── 进度工具 ──────────────────────────────────────────────
+function ss(t,d,r,f){
+  document.getElementById('sT').textContent=t;document.getElementById('sD').textContent=d;
+  document.getElementById('sR').textContent=r;document.getElementById('sF').textContent=f;
+}
 function pp(p){
-  document.getElementById('pb').style.width=p+'%';
-  document.getElementById('spct').textContent=p+'%';
+  document.getElementById('pb').style.width=p+'%';document.getElementById('spct').textContent=p+'%';
   if(p>0&&p<100)document.getElementById('stxt').textContent=`翻译中 ${document.getElementById('sD').textContent} / ${document.getElementById('sT').textContent}…`;
 }
 function lg(tag,msg){
@@ -363,22 +892,17 @@ function lg(tag,msg){
 }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-function saveProxy(){
-  const v=document.getElementById('proxyInput').value.trim();
-  if(!v){alert('请输入 Worker URL');return;}
-  localStorage.setItem('deepl_proxy',v);
-  document.getElementById('proxyStatus').style.display='block';
-  setTimeout(()=>document.getElementById('proxyStatus').style.display='none',2000);
-}
+// ── 初始化 ────────────────────────────────────────────────
+(function init(){
+  // Excel 语言格子（记住选择）
+  buildLangGrid('langGrid',selLangs,'selCount','nora_excel_langs');
+  // 文本翻译语言格子（记住选择）
+  buildLangGrid('textLangGrid',textSelLangs,null,'nora_text_langs');
 
-// 页面加载时恢复保存的代理地址
-(function(){
-  const saved=localStorage.getItem('deepl_proxy');
-  if(saved){
-    document.getElementById('proxyInput').value=saved;
-    // 更新 JS 中的 PROXY_URL 变量
-    window._proxyUrl=saved;
-  }
+  // 加载设置
+  loadSettings();
+  // 加载术语表
+  loadGlossary();
 })();
 </script>
 </body>
